@@ -166,6 +166,8 @@ h1,h2,h3,h4{font-family:'Plus Jakarta Sans',sans-serif}
   .form-grid{grid-template-columns:1fr}
   .nav-links{display:none}
 }
+.auth-tab{flex:1;text-align:center;padding:.5rem;font-weight:600;font-size:.85rem;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s}
+.auth-tab-on{color:var(--blue);border-bottom-color:var(--blue)}
 </style>
 </head>
 <body>
@@ -260,20 +262,59 @@ h1,h2,h3,h4{font-family:'Plus Jakarta Sans',sans-serif}
 <div class="page" id="page-booking">
   <section class="sec" style="background:var(--bg2)">
     <div class="sec-h"><div class="sec-label">Get Started</div><h2 class="sec-title">Book Your Free Consultation</h2><p class="sec-desc">We'll reach out within 24 hours.</p></div>
-    <div style="max-width:650px;margin:0 auto;background:#fff;border:1px solid var(--border);border-radius:var(--r2);padding:1.5rem">
-      <div class="form-grid">
-        <div class="fg"><label>First Name</label><input id="f-fn" placeholder="John" maxlength="30" oninput="autoCap(this)"></div>
-        <div class="fg"><label>Last Name</label><input id="f-ln" placeholder="Smith" maxlength="30" oninput="autoCap(this)"></div>
-        <div class="fg"><label>Email</label><input id="f-em" type="email" placeholder="john@email.com" maxlength="60"></div>
-        <div class="fg"><label>Phone</label><input id="f-ph" type="tel" placeholder="(310) 555-0100" maxlength="14" oninput="fmtPhone(this)"></div>
-        <div class="fg"><label>Property</label><select id="f-pr"><option>Select...</option><option>House</option><option>Apt/Condo</option><option>Office</option><option>Retail</option><option>Warehouse</option><option>Other</option></select></div>
-        <div class="fg"><label>Service</label><select id="f-sv"><option>Select...</option><option>Cameras</option><option>Network</option><option>Full System</option><option>WiFi</option><option>Access Control</option><option>Not Sure</option></select></div>
-        <div class="fg full"><label>Location</label><input id="f-lo" placeholder="Santa Monica, Pacific Palisades, DTLA..."></div>
-        <div class="fg full"><label>Details</label><textarea id="f-de" placeholder="How many cameras? Concerns?"></textarea></div>
-        <div class="full"><button class="btn btn-p" style="width:100%" onclick="submitForm()">Submit — Get Free Quote</button></div>
-        <div id="formMsg" style="display:none;text-align:center;padding:1.2rem;background:#ecfdf5;border:1px solid #86efac;border-radius:10px;margin:1rem auto 0;max-width:350px"><span style="font-size:1.5rem">✅</span><p style="font-weight:700;margin-top:.3rem">Request Submitted!</p><p style="color:var(--text2);font-size:.85rem">We'll get back to you within 24 hours.</p></div>
+
+    <!-- Auth: Sign In / Sign Up -->
+    <div id="authBox" style="max-width:450px;margin:0 auto 1.5rem;background:#fff;border:1px solid var(--border);border-radius:var(--r2);padding:1.5rem">
+      <div style="display:flex;gap:0;margin-bottom:1rem;border-bottom:1px solid var(--border)">
+        <div id="tabSignIn" class="auth-tab auth-tab-on" onclick="showAuth('signin')">Sign In</div>
+        <div id="tabSignUp" class="auth-tab" onclick="showAuth('signup')">Create Account</div>
       </div>
-      <p style="font-size:.72rem;color:var(--text3);margin-top:.5rem;text-align:center">Your info is sent directly to our team.</p>
+
+      <!-- Sign In -->
+      <div id="authSignIn">
+        <div class="fg"><label>Email</label><input id="a-em" type="email" placeholder="john@email.com" maxlength="60"></div>
+        <div class="fg"><label>Password</label><input id="a-pw" type="password" placeholder="••••••••" maxlength="40" onkeydown="if(event.key==='Enter')doSignIn()"></div>
+        <button class="btn btn-p" style="width:100%;margin-top:.5rem" onclick="doSignIn()">Sign In</button>
+        <div id="signInErr" style="display:none;color:#ef4444;font-size:.82rem;text-align:center;margin-top:.5rem"></div>
+      </div>
+
+      <!-- Sign Up -->
+      <div id="authSignUp" style="display:none">
+        <div class="form-grid">
+          <div class="fg"><label>First Name</label><input id="r-fn" placeholder="John" maxlength="30" oninput="autoCap(this)"></div>
+          <div class="fg"><label>Last Name</label><input id="r-ln" placeholder="Smith" maxlength="30" oninput="autoCap(this)"></div>
+          <div class="fg full"><label>Email</label><input id="r-em" type="email" placeholder="john@email.com" maxlength="60"></div>
+          <div class="fg full"><label>Phone</label><input id="r-ph" type="tel" placeholder="(310) 555-0100" maxlength="14" oninput="fmtPhone(this)"></div>
+          <div class="fg full"><label>Password</label><input id="r-pw" type="password" placeholder="Create a password" maxlength="40"></div>
+          <div class="fg full"><label>Confirm Password</label><input id="r-pw2" type="password" placeholder="Confirm password" maxlength="40" onkeydown="if(event.key==='Enter')doSignUp()"></div>
+        </div>
+        <button class="btn btn-p" style="width:100%;margin-top:.5rem" onclick="doSignUp()">Create Account</button>
+        <div id="signUpErr" style="display:none;color:#ef4444;font-size:.82rem;text-align:center;margin-top:.5rem"></div>
+        <div id="signUpOk" style="display:none;color:#00b368;font-size:.82rem;text-align:center;margin-top:.5rem"></div>
+      </div>
+    </div>
+
+    <!-- Logged In: Welcome + Quote Form -->
+    <div id="loggedInBox" style="display:none;max-width:650px;margin:0 auto">
+      <div style="background:#ecfdf5;border:1px solid #86efac;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+        <span style="font-size:.9rem">👋 Signed in as <strong id="userNameDisplay"></strong></span>
+        <button class="btn btn-s" style="padding:.3rem .8rem;font-size:.78rem;width:auto" onclick="doSignOut()">Sign Out</button>
+      </div>
+      <div id="plannerCamsBox" style="display:none;background:#fff;border:1px solid var(--border);border-radius:var(--r2);padding:1rem;margin-bottom:1rem">
+        <h4 style="font-size:.85rem;font-weight:700;color:var(--blue);margin-bottom:.5rem">🎯 Your Camera Planner Picks</h4>
+        <div id="plannerCamsList"></div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r2);padding:1.5rem">
+        <div class="form-grid">
+          <div class="fg"><label>Property</label><select id="f-pr"><option>Select...</option><option>House</option><option>Apt/Condo</option><option>Office</option><option>Retail</option><option>Warehouse</option><option>Other</option></select></div>
+          <div class="fg"><label>Service</label><select id="f-sv"><option>Select...</option><option>Cameras</option><option>Network</option><option>Full System</option><option>WiFi</option><option>Access Control</option><option>Not Sure</option></select></div>
+          <div class="fg full"><label>Location</label><input id="f-lo" placeholder="Santa Monica, Pacific Palisades, DTLA..."></div>
+          <div class="fg full"><label>Details</label><textarea id="f-de" placeholder="How many cameras? Concerns?"></textarea></div>
+          <div class="full"><button class="btn btn-p" style="width:100%" onclick="submitForm()">Submit — Get Free Quote</button></div>
+          <div id="formMsg" style="display:none;text-align:center;padding:1.2rem;background:#ecfdf5;border:1px solid #86efac;border-radius:10px;margin:1rem auto 0;max-width:350px"><span style="font-size:1.5rem">✅</span><p style="font-weight:700;margin-top:.3rem">Request Submitted!</p><p style="color:var(--text2);font-size:.85rem">We'll get back to you within 24 hours.</p></div>
+        </div>
+        <p style="font-size:.72rem;color:var(--text3);margin-top:.5rem;text-align:center">Your info is sent directly to our team.</p>
+      </div>
     </div>
   </section>
 </div>
@@ -621,14 +662,108 @@ function validEmail(e) {
 // ===== SUPABASE =====
 const SB_URL='https://fpnsarsjfymridkuvyue.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwbnNhcnNqZnltcmlka3V2eXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMTEsImV4cCI6MjA5MTI5NzExMX0.lxUvqfgNeefxxsOnv67SSy5SSUovn_FD8_K67T5s5TM';
+const SB_H={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+
+// ===== AUTH =====
+let currentUser = JSON.parse(sessionStorage.getItem('sc_user')||'null');
+
+function showAuth(tab){
+  document.getElementById('tabSignIn').classList.toggle('auth-tab-on',tab==='signin');
+  document.getElementById('tabSignUp').classList.toggle('auth-tab-on',tab==='signup');
+  document.getElementById('authSignIn').style.display=tab==='signin'?'block':'none';
+  document.getElementById('authSignUp').style.display=tab==='signup'?'block':'none';
+}
+
+async function doSignIn(){
+  const em=document.getElementById('a-em').value.trim().toLowerCase();
+  const pw=document.getElementById('a-pw').value;
+  const errEl=document.getElementById('signInErr');
+  if(!em||!pw){errEl.textContent='Please enter email and password.';errEl.style.display='block';return;}
+
+  const hash=await sha256(pw);
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/users?email=eq.'+encodeURIComponent(em)+'&password_hash=eq.'+hash+'&select=*',{headers:SB_H});
+    const data=await r.json();
+    if(!data.length){errEl.textContent='Invalid email or password.';errEl.style.display='block';setTimeout(()=>errEl.style.display='none',3000);return;}
+    if(data[0].banned){errEl.textContent='This account has been suspended.';errEl.style.display='block';return;}
+    currentUser=data[0];
+    sessionStorage.setItem('sc_user',JSON.stringify(currentUser));
+    showLoggedIn();
+  }catch(e){errEl.textContent='Connection error. Try again.';errEl.style.display='block';}
+}
+
+async function doSignUp(){
+  const fn=document.getElementById('r-fn').value.trim();
+  const ln=document.getElementById('r-ln').value.trim();
+  const em=document.getElementById('r-em').value.trim().toLowerCase();
+  const ph=document.getElementById('r-ph').value.trim();
+  const pw=document.getElementById('r-pw').value;
+  const pw2=document.getElementById('r-pw2').value;
+  const errEl=document.getElementById('signUpErr');
+  const okEl=document.getElementById('signUpOk');
+
+  if(!fn||!ln){errEl.textContent='Please enter your first and last name.';errEl.style.display='block';return;}
+  if(!em||!validEmail(em)){errEl.textContent='Please enter a valid email.';errEl.style.display='block';return;}
+  if(ph.replace(/\D/g,'').length<10){errEl.textContent='Please enter a full 10-digit phone number.';errEl.style.display='block';return;}
+  if(pw.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.style.display='block';return;}
+  if(pw!==pw2){errEl.textContent='Passwords do not match.';errEl.style.display='block';return;}
+
+  const hash=await sha256(pw);
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/users',{
+      method:'POST',headers:{...SB_H,'Prefer':'return=representation'},
+      body:JSON.stringify({name:fn+' '+ln,email:em,phone:ph,password_hash:hash})
+    });
+    if(r.status===409||r.status===400){
+      errEl.textContent='An account with this email already exists. Try signing in.';errEl.style.display='block';return;
+    }
+    const data=await r.json();
+    if(data&&data.length>0){
+      currentUser=data[0];
+      sessionStorage.setItem('sc_user',JSON.stringify(currentUser));
+      okEl.textContent='Account created! Signing you in...';okEl.style.display='block';
+      setTimeout(()=>{okEl.style.display='none';showLoggedIn();},1000);
+    } else if(data&&data.id){
+      currentUser=data;
+      sessionStorage.setItem('sc_user',JSON.stringify(currentUser));
+      okEl.textContent='Account created! Signing you in...';okEl.style.display='block';
+      setTimeout(()=>{okEl.style.display='none';showLoggedIn();},1000);
+    } else {
+      errEl.textContent='An account with this email may already exist.';errEl.style.display='block';
+    }
+  }catch(e){errEl.textContent='Connection error. Try again.';errEl.style.display='block';}
+}
+
+function doSignOut(){
+  currentUser=null;
+  sessionStorage.removeItem('sc_user');
+  document.getElementById('authBox').style.display='block';
+  document.getElementById('loggedInBox').style.display='none';
+}
+
+function showLoggedIn(){
+  document.getElementById('authBox').style.display='none';
+  document.getElementById('loggedInBox').style.display='block';
+  document.getElementById('userNameDisplay').textContent=currentUser.name;
+
+  // Check for planner cameras from sessionStorage
+  const plannerData=JSON.parse(sessionStorage.getItem('sc_planner_cams')||'null');
+  if(plannerData&&plannerData.cameras&&plannerData.cameras.length>0){
+    document.getElementById('plannerCamsBox').style.display='block';
+    const grouped={};
+    plannerData.cameras.forEach(c=>{if(!grouped[c.name])grouped[c.name]={count:0,price:c.price};grouped[c.name].count++;});
+    document.getElementById('plannerCamsList').innerHTML=
+      Object.entries(grouped).map(([n,d])=>'<div style="display:flex;justify-content:space-between;font-size:.85rem;padding:.2rem 0;border-bottom:1px solid #f0f1f4"><span>'+d.count+'× '+n+'</span><span style="font-weight:600">$'+(d.count*d.price).toLocaleString()+'</span></div>').join('')+
+      '<div style="display:flex;justify-content:space-between;font-weight:700;padding-top:.4rem;margin-top:.2rem;border-top:1px solid #ddd"><span>Total</span><span style="color:var(--blue)">$'+plannerData.total.toLocaleString()+'</span></div>';
+  }
+}
 
 async function submitForm() {
-  const g = id => (document.getElementById('f-'+id).value || '').trim();
-  const fn = g('fn'), ln = g('ln'), em = g('em'), ph = g('ph');
+  const g = id => {const el=document.getElementById('f-'+id);return el?(el.value||'').trim():'';};
 
-  if (!fn || !ln) { alert('Please enter your first and last name.'); return; }
-  if (!em || !validEmail(em)) { alert('Please enter a valid email address (e.g. john@email.com).'); return; }
-  if (ph.replace(/\D/g,'').length < 10) { alert('Please enter a full 10-digit phone number.'); return; }
+  if (!currentUser) { alert('Please sign in first.'); return; }
 
   // Collect system builder picks if any
   let buildList = [];
@@ -639,27 +774,32 @@ async function submitForm() {
     if (q > 0) { buildList.push({n:item.n,q,p:item.p*q}); buildTotal += item.p*q; }
   }));
 
+  // Include planner cameras if present
+  const plannerData=JSON.parse(sessionStorage.getItem('sc_planner_cams')||'null');
+  if(plannerData&&plannerData.cameras){
+    plannerData.cameras.forEach(c=>{buildList.push({n:c.name,q:1,p:c.price});buildTotal+=c.price;});
+  }
+
   const entry = {
-    name: fn + ' ' + ln, email: em, phone: ph,
+    name: currentUser.name, email: currentUser.email, phone: currentUser.phone,
     property: g('pr'), service: g('sv'), location: g('lo'), details: g('de'),
     system_build: buildList.length > 0 ? buildList : null,
     build_total: buildTotal > 0 ? buildTotal : null,
     source: 'form'
   };
 
-  // Save to Supabase
   try {
     await fetch(SB_URL+'/rest/v1/submissions', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
+      method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},
       body: JSON.stringify(entry)
     });
   } catch(e) { console.error('Supabase error:', e); }
 
-  // Show success
+  sessionStorage.removeItem('sc_planner_cams');
+  document.getElementById('plannerCamsBox').style.display='none';
   document.getElementById('formMsg').style.display = 'block';
-  ['fn','ln','em','ph','lo','de'].forEach(id => document.getElementById('f-'+id).value = '');
-  ['pr','sv'].forEach(id => document.getElementById('f-'+id).selectedIndex = 0);
+  ['lo','de'].forEach(id => {const el=document.getElementById('f-'+id);if(el)el.value='';});
+  ['pr','sv'].forEach(id => {const el=document.getElementById('f-'+id);if(el)el.selectedIndex=0;});
   setTimeout(() => document.getElementById('formMsg').style.display = 'none', 5000);
 }
 
@@ -685,6 +825,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('servicesContent').innerHTML = servicesHTML();
   document.getElementById('howContent').innerHTML = processHTML();
   document.getElementById('contactContent').innerHTML = contactHTML();
+
+  // Restore user session
+  if(currentUser){showLoggedIn();}
+
+  // Handle #booking redirect from planner
+  if(window.location.hash==='#booking'){
+    go('booking');
+    window.location.hash='';
+  }
 });
 </script>
 </body>
