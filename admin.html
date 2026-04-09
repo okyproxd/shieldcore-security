@@ -100,10 +100,12 @@ h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif}
     <div class="dtab on" onclick="showTab('subs',this)">📋 Submissions</div>
     <div class="dtab" onclick="showTab('stats',this)">📈 Product Stats</div>
     <div class="dtab" onclick="showTab('planner',this)">🎯 Planner Quotes</div>
+    <div class="dtab" onclick="showTab('users',this)">👥 Users</div>
   </div>
   <div id="tabSubs"><div class="loading">Loading...</div></div>
   <div id="tabStats" style="display:none"></div>
   <div id="tabPlanner" style="display:none"></div>
+  <div id="tabUsers" style="display:none"></div>
 </div>
 
 <script>
@@ -140,13 +142,12 @@ function doLogout(){sessionStorage.removeItem('sc_auth');document.getElementById
 function showTab(t,el){
   document.querySelectorAll('.dtab').forEach(function(x){x.classList.remove('on');});
   el.classList.add('on');
-  document.getElementById('tabSubs').style.display=t==='subs'?'block':'none';
-  document.getElementById('tabStats').style.display=t==='stats'?'block':'none';
-  document.getElementById('tabPlanner').style.display=t==='planner'?'block':'none';
+  ['Subs','Stats','Planner','Users'].forEach(function(n){document.getElementById('tab'+n).style.display='none';});
+  document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='block';
 }
 
 // ===== DATA =====
-var subs=[],plans=[];
+var subs=[],plans=[],users=[];
 
 async function showDash(){
   document.getElementById('ls').style.display='none';
@@ -159,12 +160,13 @@ async function loadData(){
   try{
     subs=await sbGet('submissions');
     plans=await sbGet('planner_quotes');
+    users=await sbGet('users');
   }catch(e){
-    subs=[];plans=[];
+    subs=[];plans=[];users=[];
     document.getElementById('tabSubs').innerHTML='<div class="empty"><span>⚠️</span>Could not connect to database.</div>';
     return;
   }
-  renderStats();renderSubs();renderProductStats();renderPlanner();
+  renderStats();renderSubs();renderProductStats();renderPlanner();renderUsers();
 }
 
 function renderStats(){
@@ -175,7 +177,7 @@ function renderStats(){
   document.getElementById('statsRow').innerHTML=
     '<div class="stat"><div class="n">'+subs.length+'</div><div class="l">Total Requests</div></div>'+
     '<div class="stat"><div class="n">'+todayCount+'</div><div class="l">Today</div></div>'+
-    '<div class="stat"><div class="n">'+weekCount+'</div><div class="l">This Week</div></div>'+
+    '<div class="stat"><div class="n">'+users.length+'</div><div class="l">Users</div></div>'+
     '<div class="stat"><div class="n">'+plans.length+'</div><div class="l">Planner Quotes</div></div>';
 }
 
@@ -270,6 +272,41 @@ function renderPlanner(){
 async function delPlan(id){
   if(!confirm('Delete this planner quote?'))return;
   await sbDel('planner_quotes',id);
+  await loadData();
+}
+
+function renderUsers(){
+  var el=document.getElementById('tabUsers');
+  if(!users.length){el.innerHTML='<div class="empty"><span>👥</span>No user accounts yet.</div>';return;}
+  el.innerHTML='<div style="margin-bottom:.8rem;font-size:.85rem;color:#8a8fa0">'+users.length+' registered user'+(users.length>1?'s':'')+'</div>'+
+    users.map(function(u){
+      var date=new Date(u.created_at).toLocaleString();
+      var banned=u.banned;
+      return '<div class="sc" style="'+(banned?'opacity:.6;background:#fef2f2':'')+'">'+
+        '<div class="sc-top"><span class="sc-name">'+(banned?'🚫 ':'')+u.name+'</span><span class="sc-date">Joined '+date+'</span></div>'+
+        '<div class="sc-grid">'+
+          '<div><div class="sc-lbl">Email</div><div class="sc-val"><a href="mailto:'+u.email+'">'+u.email+'</a></div></div>'+
+          '<div><div class="sc-lbl">Phone</div><div class="sc-val">'+u.phone+'</div></div>'+
+          '<div><div class="sc-lbl">Status</div><div class="sc-val" style="color:'+(banned?'#ef4444':'#00b368')+';font-weight:600">'+(banned?'Banned':'Active')+'</div></div>'+
+        '</div>'+
+        '<div class="sc-acts">'+
+          (banned?
+            '<button style="color:#00b368;border-color:#86efac" onclick="toggleBan('+u.id+',false)">✅ Unban</button>':
+            '<button style="color:#f59e0b;border-color:#fde68a" onclick="toggleBan('+u.id+',true)">⛔ Ban</button>')+
+          '<button class="del" onclick="delUser('+u.id+')">🗑 Delete Account</button>'+
+        '</div></div>';
+    }).join('');
+}
+
+async function toggleBan(id,ban){
+  if(!confirm(ban?'Ban this user? They won\'t be able to sign in.':'Unban this user?'))return;
+  await fetch(SB+'/rest/v1/users?id=eq.'+id,{method:'PATCH',headers:H,body:JSON.stringify({banned:ban})});
+  await loadData();
+}
+
+async function delUser(id){
+  if(!confirm('Permanently delete this user account? This cannot be undone.'))return;
+  await sbDel('users',id);
   await loadData();
 }
 
