@@ -128,8 +128,10 @@ async function savePlannerAndGo(){
       total:allCams.reduce((s,c)=>s+c.price,0)
     };
     await sbPost('planner_quotes',data);
+    // Save to sessionStorage so booking page can show them
+    sessionStorage.setItem('sc_planner_cams',JSON.stringify(data));
   }
-  window.location.href='./';
+  window.location.href='./#booking';
 }
 
 // ===== STATE =====
