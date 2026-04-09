@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShieldCore LA — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f6f7f9;color:#1a1d26;min-height:100vh}
+h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif}
+.topbar{background:#fff;border-bottom:1px solid #e2e5eb;padding:.6rem 1.5rem;display:flex;align-items:center;justify-content:space-between}
+.topbar .logo{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:1.1rem;text-decoration:none;color:#1a1d26}
+.topbar .logo-box{width:28px;height:28px;border-radius:6px;background:#0066ff;display:flex;align-items:center;justify-content:center}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 50px)}
+.login-box{background:#fff;border:1px solid #e2e5eb;border-radius:16px;padding:2rem;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.login-box h2{text-align:center;margin-bottom:.3rem;font-size:1.3rem}
+.login-box p{text-align:center;color:#8a8fa0;font-size:.85rem;margin-bottom:1.5rem}
+.fg{display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem}
+.fg label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#8a8fa0}
+.fg input{background:#f6f7f9;border:1px solid #e2e5eb;border-radius:10px;padding:.65rem .8rem;font-family:inherit;font-size:.85rem;outline:none}
+.fg input:focus{border-color:#0066ff}
+.btn{width:100%;padding:.7rem;border-radius:10px;background:#0066ff;color:#fff;border:none;font-weight:700;font-size:.9rem;cursor:pointer;font-family:inherit}
+.btn:hover{background:#0052cc}
+.err{color:#ef4444;font-size:.8rem;text-align:center;margin-top:.5rem;display:none}
+.dash{display:none;padding:1.5rem;max-width:1050px;margin:0 auto}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.5rem}
+.dash-header h2{font-size:1.4rem}
+.abtn{padding:.4rem .8rem;border-radius:8px;color:#fff;border:none;font-weight:600;cursor:pointer;font-family:inherit;font-size:.8rem}
+.tabs{display:flex;gap:0;border-bottom:1px solid #e2e5eb;margin-bottom:1.2rem}
+.tab{padding:.6rem 1.2rem;font-size:.85rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#8a8fa0}
+.tab.on{color:#0066ff;border-bottom-color:#0066ff}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.2rem}
+.stat{background:#fff;border:1px solid #e2e5eb;border-radius:10px;padding:.8rem;text-align:center}
+.stat .n{font-size:1.5rem;font-weight:800;color:#0066ff}
+.stat .l{font-size:.68rem;color:#8a8fa0;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.sc{background:#fff;border:1px solid #e2e5eb;border-radius:12px;padding:1rem;margin-bottom:.6rem;transition:all .2s}
+.sc:hover{border-color:#0066ff;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:.3rem}
+.sc-name{font-weight:700;font-size:.95rem}
+.sc-date{font-size:.7rem;color:#8a8fa0}
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:.3rem .6rem;font-size:.82rem}
+.sc-lbl{color:#8a8fa0;font-size:.68rem;font-weight:600;text-transform:uppercase}
+.sc-val a{color:#0066ff}
+.sc-build{margin-top:.5rem;padding:.5rem;background:#f6f7f9;border-radius:8px;font-size:.8rem}
+.sc-build h5{font-size:.72rem;font-weight:700;text-transform:uppercase;color:#0066ff;margin-bottom:.3rem}
+.sc-build-item{display:flex;justify-content:space-between;padding:.15rem 0;border-bottom:1px solid #eee}
+.sc-build-item:last-child{border:none}
+.sc-build-total{display:flex;justify-content:space-between;font-weight:700;padding-top:.3rem;margin-top:.2rem;border-top:1px solid #ddd}
+.sc-det{margin-top:.4rem;padding-top:.4rem;border-top:1px solid #f0f1f4;font-size:.82rem;color:#5c6070}
+.sc-acts{display:flex;gap:.3rem;margin-top:.5rem}
+.sc-acts button{padding:.25rem .6rem;border-radius:6px;border:1px solid #e2e5eb;background:#fff;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit}
+.sc-acts button:hover{border-color:#0066ff;color:#0066ff}
+.sc-acts .del{color:#ef4444;border-color:#fecaca}
+.sc-acts .del:hover{background:#fef2f2;border-color:#ef4444}
+.empty{text-align:center;padding:2.5rem;color:#8a8fa0;font-size:.9rem}
+.empty span{font-size:1.8rem;display:block;margin-bottom:.4rem}
+/* Popular products */
+.pp{background:#fff;border:1px solid #e2e5eb;border-radius:10px;padding:.8rem;margin-bottom:.5rem}
+.pp-bar{display:flex;align-items:center;gap:.6rem}
+.pp-name{font-weight:600;font-size:.85rem;min-width:160px}
+.pp-fill{height:22px;border-radius:6px;background:linear-gradient(90deg,#0066ff,#60a5fa);display:flex;align-items:center;padding:0 .5rem}
+.pp-fill span{color:#fff;font-size:.7rem;font-weight:700}
+.pp-count{font-size:.8rem;font-weight:700;color:#0066ff;min-width:30px;text-align:right}
+/* Planner quotes */
+.pq{background:#fff;border:1px solid #e2e5eb;border-radius:10px;padding:.8rem;margin-bottom:.5rem}
+.pq-top{display:flex;justify-content:space-between;margin-bottom:.4rem}
+.pq-date{font-size:.7rem;color:#8a8fa0}
+.pq-total{font-weight:800;color:#0066ff}
+.pq-cams{font-size:.8rem;color:#5c6070}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}.sc-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="./" class="logo"><div class="logo-box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>ShieldCore LA</a>
+  <span style="font-size:.85rem;font-weight:600;color:#8a8fa0">Admin Panel</span>
+</div>
+
+<div class="login-wrap" id="ls">
+  <div class="login-box">
+    <h2>🔒 Admin Login</h2>
+    <p>Sign in to view submissions & stats</p>
+    <div class="fg"><label>Email</label><input type="email" id="le" placeholder="your@email.com"></div>
+    <div class="fg"><label>Password</label><input type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn" onclick="doLogin()">Sign In</button>
+    <div class="err" id="lerr">Invalid email or password</div>
+  </div>
+</div>
+
+<div class="dash" id="dash">
+  <div class="dash-header">
+    <h2>📊 Dashboard</h2>
+    <div style="display:flex;gap:.4rem">
+      <button class="abtn" style="background:#0066ff" onclick="exportCSV()">📥 Export CSV</button>
+      <button class="abtn" style="background:#ef4444" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="tabs">
+    <div class="tab on" onclick="showTab('subs',this)">📋 Submissions</div>
+    <div class="tab" onclick="showTab('stats',this)">📈 Product Stats</div>
+    <div class="tab" onclick="showTab('planner',this)">🎯 Planner Quotes</div>
+  </div>
+
+  <div id="tabSubs"></div>
+  <div id="tabStats" style="display:none"></div>
+  <div id="tabPlanner" style="display:none"></div>
+</div>
+
+<script>
+const ADMINS=[
+  {email:'owenkentyu@gmail.com',pass:'Bridgeport1!'},
+  {email:'alexjschendel@gmail.com',pass:'Carlthorp'}
+];
+
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
+
+async function doLogin(){
+  const email=document.getElementById('le').value.trim().toLowerCase();
+  const pass=document.getElementById('lp').value;
+  const hash=await sha256(pass);
+  let ok=false;
+  for(const a of ADMINS){if(email===a.email&&hash===await sha256(a.pass)){ok=true;break;}}
+  if(ok){sessionStorage.setItem('sc_auth','true');showDash();}
+  else{document.getElementById('lerr').style.display='block';setTimeout(()=>document.getElementById('lerr').style.display='none',3000);}
+}
+function doLogout(){sessionStorage.removeItem('sc_auth');document.getElementById('ls').style.display='flex';document.getElementById('dash').style.display='none';}
+
+function showTab(t,el){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  ['Subs','Stats','Planner'].forEach(n=>document.getElementById('tab'+n).style.display='none');
+  document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='block';
+}
+
+function showDash(){
+  document.getElementById('ls').style.display='none';
+  document.getElementById('dash').style.display='block';
+  renderAll();
+}
+
+function getSubs(){return JSON.parse(localStorage.getItem('sc_submissions')||'[]');}
+function getPlanner(){return JSON.parse(localStorage.getItem('sc_planner_quotes')||'[]');}
+
+function renderAll(){renderStats();renderSubs();renderProductStats();renderPlanner();}
+
+function renderStats(){
+  const subs=getSubs(),plans=getPlanner();
+  const today=new Date().toLocaleDateString();
+  const weekAgo=Date.now()-7*24*60*60*1000;
+  const todayCount=subs.filter(s=>new Date(s.date).toLocaleDateString()===today).length;
+  const weekCount=subs.filter(s=>new Date(s.date).getTime()>weekAgo).length;
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat"><div class="n">${subs.length}</div><div class="l">Total Requests</div></div>
+    <div class="stat"><div class="n">${todayCount}</div><div class="l">Today</div></div>
+    <div class="stat"><div class="n">${weekCount}</div><div class="l">This Week</div></div>
+    <div class="stat"><div class="n">${plans.length}</div><div class="l">Planner Quotes</div></div>
+  `;
+}
+
+function renderSubs(){
+  const subs=getSubs().reverse();
+  const el=document.getElementById('tabSubs');
+  if(!subs.length){el.innerHTML='<div class="empty"><span>📭</span>No submissions yet.</div>';return;}
+  el.innerHTML=subs.map((s,i)=>{
+    let buildHTML='';
+    if(s.systemBuild&&s.systemBuild.length>0){
+      buildHTML=`<div class="sc-build"><h5>🛒 System Builder Picks</h5>${s.systemBuild.map(b=>`<div class="sc-build-item"><span>${b.q}× ${b.n}</span><span>$${b.p.toLocaleString()}</span></div>`).join('')}<div class="sc-build-total"><span>Equipment Total</span><span>$${s.buildTotal.toLocaleString()}</span></div></div>`;
+    }
+    return `<div class="sc">
+      <div class="sc-top"><span class="sc-name">${s.name}</span><span class="sc-date">${s.date}</span></div>
+      <div class="sc-grid">
+        <div><div class="sc-lbl">Email</div><div class="sc-val"><a href="mailto:${s.email}">${s.email}</a></div></div>
+        <div><div class="sc-lbl">Phone</div><div class="sc-val"><a href="tel:${s.phone}">${s.phone}</a></div></div>
+        <div><div class="sc-lbl">Property</div><div class="sc-val">${s.property||'—'}</div></div>
+        <div><div class="sc-lbl">Service</div><div class="sc-val">${s.service||'—'}</div></div>
+        <div><div class="sc-lbl">Location</div><div class="sc-val">${s.location||'—'}</div></div>
+      </div>
+      ${s.details?'<div class="sc-det"><strong>Details:</strong> '+s.details+'</div>':''}
+      ${buildHTML}
+      <div class="sc-acts">
+        <button onclick="window.open('mailto:${s.email}?subject=Re: ShieldCore LA&body=Hi ${(s.name||'').split(' ')[0]},%0A%0AThanks for reaching out!')">📧 Reply</button>
+        <button onclick="window.open('tel:${s.phone}')">📞 Call</button>
+        <button class="del" onclick="delSub(${subs.length-1-i})">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function delSub(i){
+  if(!confirm('Delete this submission?'))return;
+  const s=getSubs();s.splice(i,1);localStorage.setItem('sc_submissions',JSON.stringify(s));renderAll();
+}
+
+function renderProductStats(){
+  const subs=getSubs();
+  const plans=getPlanner();
+  const counts={};
+
+  // Count from submissions
+  subs.forEach(s=>{
+    if(s.systemBuild)s.systemBuild.forEach(b=>{counts[b.n]=(counts[b.n]||0)+b.q;});
+  });
+
+  // Count from planner quotes
+  plans.forEach(p=>{
+    if(p.cameras)p.cameras.forEach(c=>{counts[c.name]=(counts[c.name]||0)+1;});
+  });
+
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const el=document.getElementById('tabStats');
+
+  if(!sorted.length){el.innerHTML='<div class="empty"><span>📊</span>No product data yet.<br>Stats appear when customers pick products in the system builder or planner.</div>';return;}
+
+  const max=sorted[0][1];
+  el.innerHTML=`<h3 style="font-size:1rem;font-weight:700;margin-bottom:.8rem">Most Popular Products</h3>`+
+    sorted.map(([name,count])=>{
+      const pct=Math.round((count/max)*100);
+      return `<div class="pp"><div class="pp-bar"><span class="pp-name">${name}</span><div class="pp-fill" style="width:${Math.max(pct,8)}%"><span>${count}×</span></div></div></div>`;
+    }).join('')+
+    `<h3 style="font-size:1rem;font-weight:700;margin:1.5rem 0 .8rem">Service Breakdown</h3>`+
+    renderServiceStats(subs);
+}
+
+function renderServiceStats(subs){
+  const svcCounts={};
+  subs.forEach(s=>{if(s.service&&s.service!=='Select...')svcCounts[s.service]=(svcCounts[s.service]||0)+1;});
+  const sorted=Object.entries(svcCounts).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length)return '<p style="color:#8a8fa0;font-size:.85rem">No service data yet.</p>';
+  const max=sorted[0][1];
+  return sorted.map(([svc,count])=>{
+    const pct=Math.round((count/max)*100);
+    return `<div class="pp"><div class="pp-bar"><span class="pp-name">${svc}</span><div class="pp-fill" style="width:${Math.max(pct,8)}%;background:linear-gradient(90deg,#00b368,#34d399)"><span>${count}</span></div></div></div>`;
+  }).join('');
+}
+
+function renderPlanner(){
+  const plans=getPlanner().reverse();
+  const el=document.getElementById('tabPlanner');
+  if(!plans.length){el.innerHTML='<div class="empty"><span>🎯</span>No planner quotes yet.<br>These appear when customers use the Camera Planner and click "Get Install Quote".</div>';return;}
+  el.innerHTML=plans.map((p,i)=>{
+    const camList=p.cameras||[];
+    const grouped={};
+    camList.forEach(c=>{grouped[c.name]=(grouped[c.name]||{count:0,price:c.price});grouped[c.name].count++;});
+    return `<div class="pq">
+      <div class="pq-top"><span class="pq-date">${p.date}</span><span class="pq-total">$${(p.total||0).toLocaleString()}</span></div>
+      <div class="pq-cams">${Object.entries(grouped).map(([n,d])=>`${d.count}× ${n} ($${d.price})`).join(' • ')}</div>
+      <div style="margin-top:.4rem"><button class="abtn" style="background:#ef4444;font-size:.7rem" onclick="delPlan(${plans.length-1-i})">🗑 Delete</button></div>
+    </div>`;
+  }).join('');
+}
+
+function delPlan(i){
+  if(!confirm('Delete this planner quote?'))return;
+  const p=getPlanner();p.splice(i,1);localStorage.setItem('sc_planner_quotes',JSON.stringify(p));renderAll();
+}
+
+function exportCSV(){
+  const subs=getSubs();
+  if(!subs.length){alert('No submissions to export.');return;}
+  const h='Name,Email,Phone,Property,Service,Location,Details,System Build,Build Total,Date\n';
+  const rows=subs.map(s=>{
+    const build=s.systemBuild?s.systemBuild.map(b=>b.q+'x '+b.n).join('; '):'';
+    return [s.name,s.email,s.phone,s.property,s.service,s.location,'"'+(s.details||'').replace(/"/g,'""')+'"','"'+build+'"',s.buildTotal||'',s.date].join(',');
+  }).join('\n');
+  const blob=new Blob([h+rows],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shieldcore-submissions.csv';a.click();
+}
+
+if(sessionStorage.getItem('sc_auth')==='true')showDash();
+</script>
+</body>
+</html>
