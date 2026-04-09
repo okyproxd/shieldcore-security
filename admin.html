@@ -28,13 +28,13 @@ h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif}
 .dash-header h2{font-size:1.4rem}
 .abtn{padding:.4rem .8rem;border-radius:8px;color:#fff;border:none;font-weight:600;cursor:pointer;font-family:inherit;font-size:.8rem}
 .tabs{display:flex;gap:0;border-bottom:1px solid #e2e5eb;margin-bottom:1.2rem}
-.tab{padding:.6rem 1.2rem;font-size:.85rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#8a8fa0}
-.tab.on{color:#0066ff;border-bottom-color:#0066ff}
+.dtab{padding:.6rem 1.2rem;font-size:.85rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#8a8fa0}
+.dtab.on{color:#0066ff;border-bottom-color:#0066ff}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.2rem}
 .stat{background:#fff;border:1px solid #e2e5eb;border-radius:10px;padding:.8rem;text-align:center}
 .stat .n{font-size:1.5rem;font-weight:800;color:#0066ff}
 .stat .l{font-size:.68rem;color:#8a8fa0;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.sc{background:#fff;border:1px solid #e2e5eb;border-radius:12px;padding:1rem;margin-bottom:.6rem;transition:all .2s}
+.sc{background:#fff;border:1px solid #e2e5eb;border-radius:12px;padding:1rem;margin-bottom:.6rem}
 .sc:hover{border-color:#0066ff;box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:.3rem}
 .sc-name{font-weight:700;font-size:.95rem}
@@ -55,19 +55,17 @@ h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif}
 .sc-acts .del:hover{background:#fef2f2;border-color:#ef4444}
 .empty{text-align:center;padding:2.5rem;color:#8a8fa0;font-size:.9rem}
 .empty span{font-size:1.8rem;display:block;margin-bottom:.4rem}
-/* Popular products */
 .pp{background:#fff;border:1px solid #e2e5eb;border-radius:10px;padding:.8rem;margin-bottom:.5rem}
 .pp-bar{display:flex;align-items:center;gap:.6rem}
 .pp-name{font-weight:600;font-size:.85rem;min-width:160px}
 .pp-fill{height:22px;border-radius:6px;background:linear-gradient(90deg,#0066ff,#60a5fa);display:flex;align-items:center;padding:0 .5rem}
 .pp-fill span{color:#fff;font-size:.7rem;font-weight:700}
-.pp-count{font-size:.8rem;font-weight:700;color:#0066ff;min-width:30px;text-align:right}
-/* Planner quotes */
 .pq{background:#fff;border:1px solid #e2e5eb;border-radius:10px;padding:.8rem;margin-bottom:.5rem}
 .pq-top{display:flex;justify-content:space-between;margin-bottom:.4rem}
 .pq-date{font-size:.7rem;color:#8a8fa0}
 .pq-total{font-weight:800;color:#0066ff}
 .pq-cams{font-size:.8rem;color:#5c6070}
+.loading{text-align:center;padding:2rem;color:#8a8fa0}
 @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}.sc-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -93,181 +91,197 @@ h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif}
     <h2>📊 Dashboard</h2>
     <div style="display:flex;gap:.4rem">
       <button class="abtn" style="background:#0066ff" onclick="exportCSV()">📥 Export CSV</button>
+      <button class="abtn" style="background:#10b981" onclick="loadData()">🔄 Refresh</button>
       <button class="abtn" style="background:#ef4444" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
-
   <div class="stats" id="statsRow"></div>
-
   <div class="tabs">
-    <div class="tab on" onclick="showTab('subs',this)">📋 Submissions</div>
-    <div class="tab" onclick="showTab('stats',this)">📈 Product Stats</div>
-    <div class="tab" onclick="showTab('planner',this)">🎯 Planner Quotes</div>
+    <div class="dtab on" onclick="showTab('subs',this)">📋 Submissions</div>
+    <div class="dtab" onclick="showTab('stats',this)">📈 Product Stats</div>
+    <div class="dtab" onclick="showTab('planner',this)">🎯 Planner Quotes</div>
   </div>
-
-  <div id="tabSubs"></div>
+  <div id="tabSubs"><div class="loading">Loading...</div></div>
   <div id="tabStats" style="display:none"></div>
   <div id="tabPlanner" style="display:none"></div>
 </div>
 
 <script>
+// ===== SUPABASE =====
+const SB='https://fpnsarsjfymridkuvyue.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwbnNhcnNqZnltcmlka3V2eXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMTEsImV4cCI6MjA5MTI5NzExMX0.lxUvqfgNeefxxsOnv67SSy5SSUovn_FD8_K67T5s5TM';
+const H={'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'};
+
+async function sbGet(table){
+  const r=await fetch(SB+'/rest/v1/'+table+'?order=created_at.desc',{headers:H});
+  return await r.json();
+}
+async function sbDel(table,id){
+  await fetch(SB+'/rest/v1/'+table+'?id=eq.'+id,{method:'DELETE',headers:H});
+}
+
+// ===== AUTH =====
 const ADMINS=[
   {email:'owenkentyu@gmail.com',pass:'Bridgeport1!'},
   {email:'alexjschendel@gmail.com',pass:'Carlthorp'}
 ];
-
-async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
-
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');}
 async function doLogin(){
-  const email=document.getElementById('le').value.trim().toLowerCase();
-  const pass=document.getElementById('lp').value;
-  const hash=await sha256(pass);
-  let ok=false;
-  for(const a of ADMINS){if(email===a.email&&hash===await sha256(a.pass)){ok=true;break;}}
+  var email=document.getElementById('le').value.trim().toLowerCase();
+  var pass=document.getElementById('lp').value;
+  var hash=await sha256(pass);
+  var ok=false;
+  for(var i=0;i<ADMINS.length;i++){if(email===ADMINS[i].email&&hash===await sha256(ADMINS[i].pass)){ok=true;break;}}
   if(ok){sessionStorage.setItem('sc_auth','true');showDash();}
-  else{document.getElementById('lerr').style.display='block';setTimeout(()=>document.getElementById('lerr').style.display='none',3000);}
+  else{document.getElementById('lerr').style.display='block';setTimeout(function(){document.getElementById('lerr').style.display='none';},3000);}
 }
 function doLogout(){sessionStorage.removeItem('sc_auth');document.getElementById('ls').style.display='flex';document.getElementById('dash').style.display='none';}
 
 function showTab(t,el){
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.dtab').forEach(function(x){x.classList.remove('on');});
   el.classList.add('on');
-  ['Subs','Stats','Planner'].forEach(n=>document.getElementById('tab'+n).style.display='none');
-  document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='block';
+  document.getElementById('tabSubs').style.display=t==='subs'?'block':'none';
+  document.getElementById('tabStats').style.display=t==='stats'?'block':'none';
+  document.getElementById('tabPlanner').style.display=t==='planner'?'block':'none';
 }
 
-function showDash(){
+// ===== DATA =====
+var subs=[],plans=[];
+
+async function showDash(){
   document.getElementById('ls').style.display='none';
   document.getElementById('dash').style.display='block';
-  renderAll();
+  await loadData();
 }
 
-function getSubs(){return JSON.parse(localStorage.getItem('sc_submissions')||'[]');}
-function getPlanner(){return JSON.parse(localStorage.getItem('sc_planner_quotes')||'[]');}
-
-function renderAll(){renderStats();renderSubs();renderProductStats();renderPlanner();}
+async function loadData(){
+  document.getElementById('tabSubs').innerHTML='<div class="loading">Loading...</div>';
+  try{
+    subs=await sbGet('submissions');
+    plans=await sbGet('planner_quotes');
+  }catch(e){
+    subs=[];plans=[];
+    document.getElementById('tabSubs').innerHTML='<div class="empty"><span>⚠️</span>Could not connect to database.</div>';
+    return;
+  }
+  renderStats();renderSubs();renderProductStats();renderPlanner();
+}
 
 function renderStats(){
-  const subs=getSubs(),plans=getPlanner();
-  const today=new Date().toLocaleDateString();
-  const weekAgo=Date.now()-7*24*60*60*1000;
-  const todayCount=subs.filter(s=>new Date(s.date).toLocaleDateString()===today).length;
-  const weekCount=subs.filter(s=>new Date(s.date).getTime()>weekAgo).length;
-  document.getElementById('statsRow').innerHTML=`
-    <div class="stat"><div class="n">${subs.length}</div><div class="l">Total Requests</div></div>
-    <div class="stat"><div class="n">${todayCount}</div><div class="l">Today</div></div>
-    <div class="stat"><div class="n">${weekCount}</div><div class="l">This Week</div></div>
-    <div class="stat"><div class="n">${plans.length}</div><div class="l">Planner Quotes</div></div>
-  `;
+  var today=new Date().toLocaleDateString();
+  var weekAgo=Date.now()-7*24*60*60*1000;
+  var todayCount=subs.filter(function(s){return new Date(s.created_at).toLocaleDateString()===today;}).length;
+  var weekCount=subs.filter(function(s){return new Date(s.created_at).getTime()>weekAgo;}).length;
+  document.getElementById('statsRow').innerHTML=
+    '<div class="stat"><div class="n">'+subs.length+'</div><div class="l">Total Requests</div></div>'+
+    '<div class="stat"><div class="n">'+todayCount+'</div><div class="l">Today</div></div>'+
+    '<div class="stat"><div class="n">'+weekCount+'</div><div class="l">This Week</div></div>'+
+    '<div class="stat"><div class="n">'+plans.length+'</div><div class="l">Planner Quotes</div></div>';
 }
 
 function renderSubs(){
-  const subs=getSubs().reverse();
-  const el=document.getElementById('tabSubs');
+  var el=document.getElementById('tabSubs');
   if(!subs.length){el.innerHTML='<div class="empty"><span>📭</span>No submissions yet.</div>';return;}
-  el.innerHTML=subs.map((s,i)=>{
-    let buildHTML='';
-    if(s.systemBuild&&s.systemBuild.length>0){
-      buildHTML=`<div class="sc-build"><h5>🛒 System Builder Picks</h5>${s.systemBuild.map(b=>`<div class="sc-build-item"><span>${b.q}× ${b.n}</span><span>$${b.p.toLocaleString()}</span></div>`).join('')}<div class="sc-build-total"><span>Equipment Total</span><span>$${s.buildTotal.toLocaleString()}</span></div></div>`;
+  el.innerHTML=subs.map(function(s){
+    var buildHTML='';
+    if(s.system_build&&s.system_build.length>0){
+      buildHTML='<div class="sc-build"><h5>🛒 System Builder Picks</h5>'+
+        s.system_build.map(function(b){return '<div class="sc-build-item"><span>'+b.q+'× '+b.n+'</span><span>$'+b.p.toLocaleString()+'</span></div>';}).join('')+
+        '<div class="sc-build-total"><span>Equipment Total</span><span>$'+(s.build_total||0).toLocaleString()+'</span></div></div>';
     }
-    return `<div class="sc">
-      <div class="sc-top"><span class="sc-name">${s.name}</span><span class="sc-date">${s.date}</span></div>
-      <div class="sc-grid">
-        <div><div class="sc-lbl">Email</div><div class="sc-val"><a href="mailto:${s.email}">${s.email}</a></div></div>
-        <div><div class="sc-lbl">Phone</div><div class="sc-val"><a href="tel:${s.phone}">${s.phone}</a></div></div>
-        <div><div class="sc-lbl">Property</div><div class="sc-val">${s.property||'—'}</div></div>
-        <div><div class="sc-lbl">Service</div><div class="sc-val">${s.service||'—'}</div></div>
-        <div><div class="sc-lbl">Location</div><div class="sc-val">${s.location||'—'}</div></div>
-      </div>
-      ${s.details?'<div class="sc-det"><strong>Details:</strong> '+s.details+'</div>':''}
-      ${buildHTML}
-      <div class="sc-acts">
-        <button onclick="window.open('mailto:${s.email}?subject=Re: ShieldCore LA&body=Hi ${(s.name||'').split(' ')[0]},%0A%0AThanks for reaching out!')">📧 Reply</button>
-        <button onclick="window.open('tel:${s.phone}')">📞 Call</button>
-        <button class="del" onclick="delSub(${subs.length-1-i})">🗑 Delete</button>
-      </div>
-    </div>`;
+    var date=new Date(s.created_at).toLocaleString();
+    var firstName=(s.name||'').split(' ')[0];
+    return '<div class="sc">'+
+      '<div class="sc-top"><span class="sc-name">'+s.name+'</span><span class="sc-date">'+date+'</span></div>'+
+      '<div class="sc-grid">'+
+        '<div><div class="sc-lbl">Email</div><div class="sc-val"><a href="mailto:'+s.email+'">'+s.email+'</a></div></div>'+
+        '<div><div class="sc-lbl">Phone</div><div class="sc-val"><a href="tel:'+s.phone+'">'+s.phone+'</a></div></div>'+
+        '<div><div class="sc-lbl">Property</div><div class="sc-val">'+(s.property||'—')+'</div></div>'+
+        '<div><div class="sc-lbl">Service</div><div class="sc-val">'+(s.service||'—')+'</div></div>'+
+        '<div><div class="sc-lbl">Location</div><div class="sc-val">'+(s.location||'—')+'</div></div>'+
+      '</div>'+
+      (s.details?'<div class="sc-det"><strong>Details:</strong> '+s.details+'</div>':'')+
+      buildHTML+
+      '<div class="sc-acts">'+
+        '<button onclick="window.open(\'mailto:'+s.email+'?subject=Re: ShieldCore LA&body=Hi '+firstName+',%0A%0AThanks for reaching out!\')">📧 Reply</button>'+
+        '<button onclick="window.open(\'tel:'+s.phone+'\')">📞 Call</button>'+
+        '<button class="del" onclick="delSub('+s.id+')">🗑 Delete</button>'+
+      '</div></div>';
   }).join('');
 }
 
-function delSub(i){
+async function delSub(id){
   if(!confirm('Delete this submission?'))return;
-  const s=getSubs();s.splice(i,1);localStorage.setItem('sc_submissions',JSON.stringify(s));renderAll();
+  await sbDel('submissions',id);
+  await loadData();
 }
 
 function renderProductStats(){
-  const subs=getSubs();
-  const plans=getPlanner();
-  const counts={};
-
-  // Count from submissions
-  subs.forEach(s=>{
-    if(s.systemBuild)s.systemBuild.forEach(b=>{counts[b.n]=(counts[b.n]||0)+b.q;});
+  var counts={};
+  subs.forEach(function(s){
+    if(s.system_build)s.system_build.forEach(function(b){counts[b.n]=(counts[b.n]||0)+b.q;});
+  });
+  plans.forEach(function(p){
+    if(p.cameras)p.cameras.forEach(function(c){counts[c.name]=(counts[c.name]||0)+1;});
   });
 
-  // Count from planner quotes
-  plans.forEach(p=>{
-    if(p.cameras)p.cameras.forEach(c=>{counts[c.name]=(counts[c.name]||0)+1;});
+  var sorted=Object.entries(counts).sort(function(a,b){return b[1]-a[1];});
+  var el=document.getElementById('tabStats');
+  if(!sorted.length){el.innerHTML='<div class="empty"><span>📊</span>No product data yet.</div>';return;}
+
+  var max=sorted[0][1];
+  var html='<h3 style="font-size:1rem;font-weight:700;margin-bottom:.8rem">Most Popular Products</h3>';
+  sorted.forEach(function(item){
+    var pct=Math.round((item[1]/max)*100);
+    html+='<div class="pp"><div class="pp-bar"><span class="pp-name">'+item[0]+'</span><div class="pp-fill" style="width:'+Math.max(pct,8)+'%"><span>'+item[1]+'×</span></div></div></div>';
   });
 
-  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-  const el=document.getElementById('tabStats');
-
-  if(!sorted.length){el.innerHTML='<div class="empty"><span>📊</span>No product data yet.<br>Stats appear when customers pick products in the system builder or planner.</div>';return;}
-
-  const max=sorted[0][1];
-  el.innerHTML=`<h3 style="font-size:1rem;font-weight:700;margin-bottom:.8rem">Most Popular Products</h3>`+
-    sorted.map(([name,count])=>{
-      const pct=Math.round((count/max)*100);
-      return `<div class="pp"><div class="pp-bar"><span class="pp-name">${name}</span><div class="pp-fill" style="width:${Math.max(pct,8)}%"><span>${count}×</span></div></div></div>`;
-    }).join('')+
-    `<h3 style="font-size:1rem;font-weight:700;margin:1.5rem 0 .8rem">Service Breakdown</h3>`+
-    renderServiceStats(subs);
-}
-
-function renderServiceStats(subs){
-  const svcCounts={};
-  subs.forEach(s=>{if(s.service&&s.service!=='Select...')svcCounts[s.service]=(svcCounts[s.service]||0)+1;});
-  const sorted=Object.entries(svcCounts).sort((a,b)=>b[1]-a[1]);
-  if(!sorted.length)return '<p style="color:#8a8fa0;font-size:.85rem">No service data yet.</p>';
-  const max=sorted[0][1];
-  return sorted.map(([svc,count])=>{
-    const pct=Math.round((count/max)*100);
-    return `<div class="pp"><div class="pp-bar"><span class="pp-name">${svc}</span><div class="pp-fill" style="width:${Math.max(pct,8)}%;background:linear-gradient(90deg,#00b368,#34d399)"><span>${count}</span></div></div></div>`;
-  }).join('');
+  // Service breakdown
+  var svcCounts={};
+  subs.forEach(function(s){if(s.service&&s.service!=='Select...')svcCounts[s.service]=(svcCounts[s.service]||0)+1;});
+  var svcSorted=Object.entries(svcCounts).sort(function(a,b){return b[1]-a[1];});
+  if(svcSorted.length){
+    html+='<h3 style="font-size:1rem;font-weight:700;margin:1.5rem 0 .8rem">Service Breakdown</h3>';
+    var smax=svcSorted[0][1];
+    svcSorted.forEach(function(item){
+      var pct=Math.round((item[1]/smax)*100);
+      html+='<div class="pp"><div class="pp-bar"><span class="pp-name">'+item[0]+'</span><div class="pp-fill" style="width:'+Math.max(pct,8)+'%;background:linear-gradient(90deg,#00b368,#34d399)"><span>'+item[1]+'</span></div></div></div>';
+    });
+  }
+  el.innerHTML=html;
 }
 
 function renderPlanner(){
-  const plans=getPlanner().reverse();
-  const el=document.getElementById('tabPlanner');
-  if(!plans.length){el.innerHTML='<div class="empty"><span>🎯</span>No planner quotes yet.<br>These appear when customers use the Camera Planner and click "Get Install Quote".</div>';return;}
-  el.innerHTML=plans.map((p,i)=>{
-    const camList=p.cameras||[];
-    const grouped={};
-    camList.forEach(c=>{grouped[c.name]=(grouped[c.name]||{count:0,price:c.price});grouped[c.name].count++;});
-    return `<div class="pq">
-      <div class="pq-top"><span class="pq-date">${p.date}</span><span class="pq-total">$${(p.total||0).toLocaleString()}</span></div>
-      <div class="pq-cams">${Object.entries(grouped).map(([n,d])=>`${d.count}× ${n} ($${d.price})`).join(' • ')}</div>
-      <div style="margin-top:.4rem"><button class="abtn" style="background:#ef4444;font-size:.7rem" onclick="delPlan(${plans.length-1-i})">🗑 Delete</button></div>
-    </div>`;
+  var el=document.getElementById('tabPlanner');
+  if(!plans.length){el.innerHTML='<div class="empty"><span>🎯</span>No planner quotes yet.</div>';return;}
+  el.innerHTML=plans.map(function(p){
+    var camList=p.cameras||[];
+    var grouped={};
+    camList.forEach(function(c){
+      if(!grouped[c.name])grouped[c.name]={count:0,price:c.price};
+      grouped[c.name].count++;
+    });
+    var date=new Date(p.created_at).toLocaleString();
+    var camText=Object.entries(grouped).map(function(e){return e[1].count+'× '+e[0]+' ($'+e[1].price+')';}).join(' • ');
+    return '<div class="pq"><div class="pq-top"><span class="pq-date">'+date+'</span><span class="pq-total">$'+(p.total||0).toLocaleString()+'</span></div><div class="pq-cams">'+camText+'</div><div style="margin-top:.4rem"><button class="abtn" style="background:#ef4444;font-size:.7rem" onclick="delPlan('+p.id+')">🗑 Delete</button></div></div>';
   }).join('');
 }
 
-function delPlan(i){
+async function delPlan(id){
   if(!confirm('Delete this planner quote?'))return;
-  const p=getPlanner();p.splice(i,1);localStorage.setItem('sc_planner_quotes',JSON.stringify(p));renderAll();
+  await sbDel('planner_quotes',id);
+  await loadData();
 }
 
 function exportCSV(){
-  const subs=getSubs();
   if(!subs.length){alert('No submissions to export.');return;}
-  const h='Name,Email,Phone,Property,Service,Location,Details,System Build,Build Total,Date\n';
-  const rows=subs.map(s=>{
-    const build=s.systemBuild?s.systemBuild.map(b=>b.q+'x '+b.n).join('; '):'';
-    return [s.name,s.email,s.phone,s.property,s.service,s.location,'"'+(s.details||'').replace(/"/g,'""')+'"','"'+build+'"',s.buildTotal||'',s.date].join(',');
+  var h='Name,Email,Phone,Property,Service,Location,Details,System Build,Build Total,Date\n';
+  var rows=subs.map(function(s){
+    var build=s.system_build?s.system_build.map(function(b){return b.q+'x '+b.n;}).join('; '):'';
+    return [s.name,s.email,s.phone,s.property,s.service,s.location,'"'+(s.details||'').replace(/"/g,'""')+'"','"'+build+'"',s.build_total||'',new Date(s.created_at).toLocaleString()].join(',');
   }).join('\n');
-  const blob=new Blob([h+rows],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shieldcore-submissions.csv';a.click();
+  var blob=new Blob([h+rows],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shieldcore-submissions.csv';a.click();
 }
 
 if(sessionStorage.getItem('sc_auth')==='true')showDash();
