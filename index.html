@@ -618,7 +618,11 @@ function validEmail(e) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
 }
 
-function submitForm() {
+// ===== SUPABASE =====
+const SB_URL='https://fpnsarsjfymridkuvyue.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwbnNhcnNqZnltcmlka3V2eXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMTEsImV4cCI6MjA5MTI5NzExMX0.lxUvqfgNeefxxsOnv67SSy5SSUovn_FD8_K67T5s5TM';
+
+async function submitForm() {
   const g = id => (document.getElementById('f-'+id).value || '').trim();
   const fn = g('fn'), ln = g('ln'), em = g('em'), ph = g('ph');
 
@@ -638,15 +642,19 @@ function submitForm() {
   const entry = {
     name: fn + ' ' + ln, email: em, phone: ph,
     property: g('pr'), service: g('sv'), location: g('lo'), details: g('de'),
-    date: new Date().toLocaleString(),
-    systemBuild: buildList.length > 0 ? buildList : null,
-    buildTotal: buildTotal > 0 ? buildTotal : null
+    system_build: buildList.length > 0 ? buildList : null,
+    build_total: buildTotal > 0 ? buildTotal : null,
+    source: 'form'
   };
 
-  // Save to localStorage
-  const subs = JSON.parse(localStorage.getItem('sc_submissions') || '[]');
-  subs.push(entry);
-  localStorage.setItem('sc_submissions', JSON.stringify(subs));
+  // Save to Supabase
+  try {
+    await fetch(SB_URL+'/rest/v1/submissions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
+      body: JSON.stringify(entry)
+    });
+  } catch(e) { console.error('Supabase error:', e); }
 
   // Show success
   document.getElementById('formMsg').style.display = 'block';
